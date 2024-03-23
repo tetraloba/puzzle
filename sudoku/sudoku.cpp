@@ -3,10 +3,13 @@
 #include <sstream>
 #include <vector>
 #define INIT_FILE "init.txt"
-#define CONF_COL RED
 #define BORDER_COL GREEN
+#define CONF_COL YELLOW
+#define USER_COL RED
 #define RED 31
 #define GREEN 32
+#define YELLOW 33
+#define BLUE 34
 using namespace std;
 
 /* 座標(i行j列) */
@@ -20,6 +23,7 @@ class Square{
     public:
         int value = 0;
         bool possible[10];
+        char type = '\0';
         Square();
 };
 /* マスのコンストラクタ。最初はすべての数字の可能性がある。 */
@@ -42,6 +46,7 @@ class Board{
         Board(string init_file);
         void printBoard();
         int put(int i, int j, int n);
+        int put(int i, int j, int n, char type);
         int auto_fill();
         void test();
 };
@@ -60,7 +65,7 @@ Board::Board(string init_file){
         int r, c, x;
         ss >> r >> c >> x;
         r--; c--;
-        put(r, c, x);
+        put(r, c, x, 'i');
     }
     ifs.close();
 }
@@ -91,7 +96,21 @@ void Board::printBoard(){
                 cout << ' ';
                 for (int l = 0; l < SQRT_SIZE; l++) {
                     if (board[i][j].value) {
-                        cout << (k * SQRT_SIZE + l == (SIZE - 1) / 2 ? colored_string(to_string(board[i][j].value), CONF_COL) : " ");
+                        int col;
+                        switch (board[i][j].type) {
+                            case 'i':
+                                col = BORDER_COL;
+                                break;
+                            case 'a':
+                                col = CONF_COL;
+                                break;
+                            case 'u':
+                                col = USER_COL;
+                                break;
+                            default:
+                                col = CONF_COL;
+                        }
+                        cout << (k * SQRT_SIZE + l == (SIZE - 1) / 2 ? colored_string(to_string(board[i][j].value), col) : " ");
                     } else {
                         // cout << k << ',' << l << ' ' << k * SQRT_SIZE + l + 1 << endl;
                         cout << (board[i][j].possible[k * SQRT_SIZE + l + 1] ? to_string(k * SQRT_SIZE + l + 1) : " ");
@@ -122,6 +141,13 @@ int Board::put(int i, int j, int n){
         board[part_member[k].i][part_member[k].j].possible[n] = false; // 同じセグメント
     }
     return 0;
+}
+int Board::put(int i, int j, int n, char type){
+    int res = put(i, j, n);
+    if (!res) {
+        board[i][j].type = type;
+    }
+    return res;
 }
 int Board::auto_fill(){
     while (true) {
@@ -261,7 +287,7 @@ int main(){
         }
         cin >> j >> n;
         j--;
-        game.put(i, j, n);
+        game.put(i, j, n, 'u');
         game.auto_fill();
         game.printBoard();
     }
