@@ -1,5 +1,8 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
+#define INIT_FILE "init.txt"
 #define CONF_COL RED
 #define BORDER_COL GREEN
 #define RED 31
@@ -35,11 +38,32 @@ class Board{
         static int part_of(Pos p){return p.i / 3 * 3 + p.j / 3;}; // 座標pが属するセグメント番号を返す
         Square board[SIZE][SIZE];
     public:
+        Board();
+        Board(string init_file);
         void printBoard();
         int put(int i, int j, int n);
         int auto_fill();
         void test();
 };
+Board::Board(){
+    ;
+}
+Board::Board(string init_file){
+    ifstream ifs(init_file);
+    if (ifs.fail()) {
+        cerr << "file open error (" << init_file << ")" << endl;
+        exit(1);
+    }
+    string str;
+    while (getline(ifs, str)) {
+        stringstream ss(str);
+        int r, c, x;
+        ss >> r >> c >> x;
+        r--; c--;
+        put(r, c, x);
+    }
+    ifs.close();
+}
 /* 指定したセグメント番号に属する座標のリストを返す */
 vector<Pos> Board::members(int part){
     int i = part / SQRT_SIZE, j = part % SQRT_SIZE;
@@ -224,7 +248,7 @@ void Board::test(){
 }
 
 int main(){
-    Board game;
+    Board game(INIT_FILE);
     // game.put(0, 3, 4);
     game.printBoard();
     // game.test();
