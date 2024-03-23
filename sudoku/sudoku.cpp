@@ -275,6 +275,7 @@ void Board::test(){
 
 int main(){
     Board game(INIT_FILE);
+    game.auto_fill();
     // game.put(0, 3, 4);
     game.printBoard();
     // game.test();
