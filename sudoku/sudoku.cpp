@@ -37,6 +37,7 @@ class Board{
     public:
         void printBoard();
         int put(int i, int j, int n);
+        int auto_fill();
         void test();
 };
 /* 指定したセグメント番号に属する座標のリストを返す */
@@ -98,6 +99,119 @@ int Board::put(int i, int j, int n){
     }
     return 0;
 }
+int Board::auto_fill(){
+    while (true) {
+        bool unq_found = false;
+        /* 同マス内 */
+        for (int r = 0; r < SIZE; r++) {
+            if (unq_found) {
+                break;
+            }
+            for (int c = 0; c < SIZE; c++) {
+                if (board[r][c].value) {
+                    continue;
+                }
+                int unq_p = 0;
+                for (int p = 1; p <= 9; p++) {
+                    if (board[r][c].possible[p]) {
+                        if (unq_p) {
+                            unq_p = -1;
+                            break;
+                        }
+                        unq_p = p;
+                    }
+                }
+                if (unq_p && unq_p != -1) {
+                    put(r, c, unq_p);
+                    unq_found = true;
+                    break;
+                }
+            }
+        }
+        /* 同行内 */
+        for (int r = 0; r < SIZE; r++ ) {
+            if (unq_found) {
+                break;
+            }
+            for (int p = 1; p <= 9; p++) {
+                int unq_c = SIZE; // pが唯一存在する列
+                for (int c = 0; c < SIZE; c++) {
+                    if (board[r][c].value) {
+                        continue;
+                    }
+                    if (board[r][c].possible[p]) {
+                        if (unq_c != SIZE) {
+                            unq_c = -1;
+                            break;
+                        }
+                        unq_c = c;
+                    }
+                }
+                if (unq_c != SIZE && unq_c != -1) {
+                    put(r, unq_c, p);
+                    unq_found = true;
+                    break;
+                }
+            }
+        }
+        /* 同列内 */
+        for (int c = 0; c < SIZE; c++) {
+            if (unq_found) {
+                break;
+            }
+            for (int p = 1; p <= 9; p++) {
+                int unq_r = SIZE;
+                for (int r = 0; r < SIZE; r++) {
+                    if (board[r][c].value) {
+                        continue;
+                    }
+                    if (board[r][c].possible[p]) {
+                        if (unq_r != SIZE) {
+                            unq_r = -1;
+                            break;
+                        }
+                        unq_r = r;
+                    }
+                }
+                if (unq_r != SIZE && unq_r != -1) {
+                    put(unq_r, c, p);
+                    unq_found = true;
+                    break;
+                }
+            }
+        }
+        /* 同セグメント内 */
+        for (int seg = 0; seg < SIZE; seg++) {
+            if (unq_found) {
+                break;
+            }
+            for (int p = 1; p <= 9; p++) {
+                int unq_i = SIZE, unq_j = SIZE;
+                for (auto pos : members(seg)) {
+                    if (board[pos.i][pos.j].value) {
+                        continue;
+                    }
+                    if (board[pos.i][pos.j].possible[p]) {
+                        if (unq_i) {
+                            unq_i = -1;
+                            break;
+                        }
+                        unq_i = pos.i;
+                        unq_j = pos.j;
+                    }
+                }
+                if (unq_i != SIZE && unq_i != -1) {
+                    put(unq_i, unq_j, p);
+                    unq_found = true;
+                    break;
+                }
+            }
+        }
+        if (!unq_found) {
+            return 0; // fillした数やfillした座標のリストを返すべき #todo
+        }
+    }
+}
 /* members()メソッドとpart_of()メソッドが正しく実装できているかどうかのテスト用 */
 void Board::test(){
     for (int i = 0; i < 9; i++) {
@@ -124,6 +238,7 @@ int main(){
         cin >> j >> n;
         j--;
         game.put(i, j, n);
+        game.auto_fill();
         game.printBoard();
     }
     return 0;
