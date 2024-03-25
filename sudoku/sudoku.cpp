@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <stack>
 #define INIT_FILE "init.txt"
 #define BORDER_COL GREEN
 #define CONF_COL YELLOW
@@ -49,6 +50,8 @@ class Board{
         int put(int i, int j, int n);
         int put(int i, int j, int n, char type);
         int auto_fill();
+        long long entropy();
+        bool unattainable(); // 埋められないマスが存在するならtrue
         void test();
         void test_copy();
 };
@@ -277,6 +280,102 @@ int Board::auto_fill(){
         }
     }
 }
+/* 達成不可能である。(埋められないマスまたはどこにも入らない数字が存在する。) */
+bool Board::unattainable(){
+    bool unA_found = false;
+    /* 同マス内 */
+    for (int r = 0; r < SIZE; r++) {
+        if (unA_found) {
+            break;
+        }
+        for (int c = 0; c < SIZE; c++) {
+            if (board[r][c].value) {
+                continue;
+            }
+            bool candidate_exists = false;
+            for (int p = 1; p <= 9; p++) {
+                if (board[r][c].possible[p]) {
+                    candidate_exists = true;
+                    break;
+                }
+            }
+            if (!candidate_exists) {
+                unA_found = true;
+                break;
+            }
+        }
+    }
+    /* 同行内 */
+    for (int r = 0; r < SIZE; r++ ) {
+        if (unA_found) {
+            break;
+        }
+        for (int p = 1; p <= 9; p++) {
+            bool candidate_exists = false;
+            for (int c = 0; c < SIZE; c++) {
+                if (board[r][c].value == p) {
+                    candidate_exists = true;
+                    break;
+                }
+                if (board[r][c].possible[p]) {
+                    candidate_exists = true;
+                    break;
+                }
+            }
+            if (!candidate_exists) {
+                unA_found = true;
+                break;
+            }
+        }
+    }
+    /* 同列内 */
+    for (int c = 0; c < SIZE; c++) {
+        if (unA_found) {
+            break;
+        }
+        for (int p = 1; p <= 9; p++) {
+            bool candidate_exists = false;
+            for (int r = 0; r < SIZE; r++) {
+                if (board[r][c].value == p) {
+                    candidate_exists = true;
+                    break;
+                }
+                if (board[r][c].possible[p]) {
+                    candidate_exists = true;
+                    break;
+                }
+            }
+            if (!candidate_exists) {
+                unA_found = true;
+                break;
+            }
+        }
+    }
+    /* 同セグメント内 */
+    for (int seg = 0; seg < SIZE; seg++) {
+        if (unA_found) {
+            break;
+        }
+        for (int p = 1; p <= 9; p++) {
+            bool candidate_exists = false;
+            for (auto pos : members(seg)) {
+                if (board[pos.i][pos.j].value == p) {
+                    candidate_exists = true;
+                    break;
+                }
+                if (board[pos.i][pos.j].possible[p]) {
+                    candidate_exists = true;
+                    break;
+                }
+            }
+            if (!candidate_exists) {
+                unA_found = true;
+                break;
+            }
+        }
+    }
+    return unA_found;
+}
 /* members()メソッドとpart_of()メソッドが正しく実装できているかどうかのテスト用 */
 void Board::test(){
     for (int i = 0; i < 9; i++) {
@@ -293,15 +392,64 @@ void Board::test_copy(){
     game.put(8,8,5);
     game.printBoard();
 }
+/* 収束する最終盤面が何通り有るかを返す */
+long long Board::entropy(){
+    stack<Board> stk;
+    Board game(*this);
+    stk.push(game); // stk.push(*(new Board(*this))); みたいな書き方ってアリ？ #todo
+    long long res = 0;
+    while (!stk.empty()) {
+        auto elm = stk.top(); stk.pop(); // これって代入演算子のオーバーロードしていないとまずい？ #todo
+        if (elm.unattainable()) {
+            continue;
+        }
+        bool found_empty = false;
+        for (int r = 0; r < SIZE; r++) { // 毎回0から探索するのは非効率 #todo
+            if (found_empty) {
+                break; // 最初の空きマスのみで終了。 さもないと重複する。
+            }
+            for (int c = 0; c < SIZE; c++) {
+                if (!elm.board[r][c].value) {
+                    continue;
+                }
+                for (int i = 1; i <= 9; i++) {
+                    if (elm.board[r][c].possible[i]) {
+                        Board b(elm);
+                        b.put(r, c, i);
+                        b.auto_fill();
+                        // cout << stk.size() << endl;
+                        // if (stk.size() % 7 == 0) {
+                        //     b.printBoard();
+                        //     cout << endl;
+                        // }
+                        stk.push(b);
+                    }
+                }
+                found_empty = true;
+                break;
+            }
+        }
+        if (!found_empty) {
+            // cout << stk.size() << endl;
+            // if (stk.size() == 20) {
+            //     cout << '\n' << stk.size() << endl;
+            //     elm.printBoard();
+            // }
+            res++;
+            // if (res % 100 == 0) {
+            //     cout << res << endl;
+            //     elm.printBoard();
+            //     cout << endl;
+            // }
+        }
+    }
+    return res;
+}
 
 int main(){
     Board game(INIT_FILE);
-    game.auto_fill();
-    game.printBoard();
-    cout << "test_copy()メソッド呼び出し" << endl;
-    game.test_copy();
-    cout << "コピー元のprintBoard()メソッドの再呼び出し" << endl;
-    game.printBoard();
+    // game.auto_fill();
+    // game.printBoard();
     // while (true) {
     //     int i, j, n;
     //     cin >> i;
@@ -315,5 +463,6 @@ int main(){
     //     game.auto_fill();
     //     game.printBoard();
     // }
+    cout << game.entropy() << endl;
     return 0;
 }
