@@ -40,20 +40,27 @@ class Board{
         static const int SQRT_SIZE = 3;
         static vector<Pos> members(int part);
         static int part_of(Pos p){return p.i / 3 * 3 + p.j / 3;}; // 座標pが属するセグメント番号を返す
-        Square board[SIZE][SIZE];
+        Square **board; // board[SIZE][SIZE] (Board()参照)
     public:
         Board();
         Board(string init_file);
+        Board(const Board& b); // コピーコンストラクタ
         void printBoard();
         int put(int i, int j, int n);
         int put(int i, int j, int n, char type);
         int auto_fill();
         void test();
+        void test_copy();
 };
+/* コンストラクタ */
 Board::Board(){
-    ;
+    board = new Square* [SIZE];
+    for (int i = 0; i < SIZE; i++) {
+        board[i] = new Square[SIZE];
+    }
 }
-Board::Board(string init_file){
+/* コンストラクタ(ファイルによる初期化) */
+Board::Board(string init_file): Board(){
     ifstream ifs(init_file);
     if (ifs.fail()) {
         cerr << "file open error (" << init_file << ")" << endl;
@@ -68,6 +75,14 @@ Board::Board(string init_file){
         put(r, c, x, 'i');
     }
     ifs.close();
+}
+/* コピーコンストラクタ */
+Board::Board(const Board& b): Board(){
+    for (int r = 0; r < SIZE; r++) {
+        for (int c = 0; c < SIZE; c++) {
+            board[r][c] = b.board[r][c];
+        }
+    }
 }
 /* 指定したセグメント番号に属する座標のリストを返す */
 vector<Pos> Board::members(int part){
@@ -272,25 +287,33 @@ void Board::test(){
         cout << endl;
     }
 }
+/* コピーコンストラクタが正しく実装できているかどうかのテスト用 */
+void Board::test_copy(){
+    Board game(*this);
+    game.put(8,8,5);
+    game.printBoard();
+}
 
 int main(){
     Board game(INIT_FILE);
     game.auto_fill();
-    // game.put(0, 3, 4);
     game.printBoard();
-    // game.test();
-    while (true) {
-        int i, j, n;
-        cin >> i;
-        i--;
-        if (i == -1) {
-            break;
-        }
-        cin >> j >> n;
-        j--;
-        game.put(i, j, n, 'u');
-        game.auto_fill();
-        game.printBoard();
-    }
+    cout << "test_copy()メソッド呼び出し" << endl;
+    game.test_copy();
+    cout << "コピー元のprintBoard()メソッドの再呼び出し" << endl;
+    game.printBoard();
+    // while (true) {
+    //     int i, j, n;
+    //     cin >> i;
+    //     i--;
+    //     if (i == -1) {
+    //         break;
+    //     }
+    //     cin >> j >> n;
+    //     j--;
+    //     game.put(i, j, n, 'u');
+    //     game.auto_fill();
+    //     game.printBoard();
+    // }
     return 0;
 }
