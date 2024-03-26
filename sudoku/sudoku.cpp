@@ -409,7 +409,7 @@ long long Board::entropy(){
                 break; // 最初の空きマスのみで終了。 さもないと重複する。
             }
             for (int c = 0; c < SIZE; c++) {
-                if (!elm.board[r][c].value) {
+                if (elm.board[r][c].value) {
                     continue;
                 }
                 for (int i = 1; i <= 9; i++) {
