@@ -25,7 +25,7 @@ class Square{
         int value = 0;
         bool possible[10];
         char type = '\0';
-        Square();
+        Square(); // コンストラクタ
 };
 /* マスのコンストラクタ。最初はすべての数字の可能性がある。 */
 Square::Square(){
@@ -46,6 +46,7 @@ class Board{
         Board();
         Board(string init_file);
         Board(const Board& b); // コピーコンストラクタ
+        ~Board(); // デストラクタ
         void printBoard(bool compact);
         int put(int i, int j, int n);
         int put(int i, int j, int n, char type);
@@ -86,6 +87,13 @@ Board::Board(const Board& b): Board(){
             board[r][c] = b.board[r][c];
         }
     }
+}
+/* デストラクタ */
+Board::~Board(){
+    for (int i = 0; i < SIZE; i++) {
+        delete[] board[i];
+    }
+    delete[] board;
 }
 /* 指定したセグメント番号に属する座標のリストを返す */
 vector<Pos> Board::members(int part){
@@ -454,9 +462,9 @@ long long Board::entropy(){
             //     elm.printBoard();
             //     cout << endl;
             // }
-            cout << '(' << res << ')' << endl;
-            elm.printBoard(true);
-            cout << endl;
+            // cout << '(' << res << ')' << endl;
+            // elm.printBoard(true);
+            // cout << endl;
         }
     }
     return res;
