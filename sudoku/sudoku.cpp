@@ -46,7 +46,7 @@ class Board{
         Board();
         Board(string init_file);
         Board(const Board& b); // コピーコンストラクタ
-        void printBoard();
+        void printBoard(bool compact);
         int put(int i, int j, int n);
         int put(int i, int j, int n, char type);
         int auto_fill();
@@ -106,7 +106,20 @@ string colored_string(string S, int color){
     return "\033[" + to_string(color) + "m" + S + "\033[m";
 }
 /* boardの内容を出力する */
-void Board::printBoard(){
+void Board::printBoard(bool compact=false){
+    if (compact) {
+        for (int r = 0; r < SIZE; r++) {
+            for (int c = 0; c < SIZE; c++) {
+                if (board[r][c].value) {
+                    cout << board[r][c].value;
+                } else {
+                    cout << '.';
+                }
+            }
+            cout << endl;
+        }
+        return;
+    }
     for (int i = 0; i < SIZE; i++) {
         for (int k = 0; k < SQRT_SIZE; k++) {
             cout << colored_string("|", BORDER_COL);
@@ -441,6 +454,9 @@ long long Board::entropy(){
             //     elm.printBoard();
             //     cout << endl;
             // }
+            cout << '(' << res << ')' << endl;
+            elm.printBoard(true);
+            cout << endl;
         }
     }
     return res;
